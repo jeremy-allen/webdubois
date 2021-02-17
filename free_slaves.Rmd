@@ -1,0 +1,111 @@
+---
+title: "Free vs Slaves"
+author: "Jeremy Allen"
+date: "2/16/2021"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
+
+library(tidyverse)
+library(scales)
+library(showtext)
+
+```
+
+```{r data, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
+
+dat <- read_csv("https://raw.githubusercontent.com/ajstarks/dubois-data-portraits/master/challenge/challenge04/data.csv")
+
+```
+
+```{r clean, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
+
+dat <- dat %>% 
+ mutate(Year = as.integer(Year)) %>% 
+ pivot_longer(cols = Slave:Free,
+              names_to = "Status",
+              values_to = "N") %>% 
+ mutate(N = if_else(Status == "Free", 100, N),
+        N = if_else(Status == "Slave" & Year == 1800, 89, N))
+
+```
+
+
+```{r plot, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+font_add("dosis-r", regular = "Dosis-Regular.ttf")
+font_add("dosis-b", regular = "Dosis-Bold.ttf")
+showtext_auto()
+
+p <- ggplot() +
+ geom_area(data = dat %>% filter(Status == "Free"),
+           aes(x = Year, y = N),
+           fill = "#26734d", alpha = .8) +
+ geom_area(data = dat %>% filter(Status == "Slave"),
+           aes(x = Year, y = N),
+           fill = "black", alpha = .9) +
+ geom_segment(data = dat %>% filter(Status == "Slave"),
+              aes(x = Year, xend = Year, y = N+4, yend = 100), alpha = .3) +
+ geom_text(data = dat %>% filter(Status == "Slave"),
+           aes(x = Year, y = if_else(N == 0, 88, N), label = str_c(100-N, "%")),
+           nudge_y = 2,
+           size = 5) +
+ labs(
+  title = "PROPORTION OF FREEMEN AND SLAVES AMONG AMERICAN NEGROES  .
+  
+  PROPORTION DES NÈGRES LIBRES ET DES ESCLAVES EN AMÉRIQUE  .",
+  subtitle = "
+  
+  DONE BY ATLANTA UNIVERSITY  .
+  
+  
+  
+  
+  ",
+  x = "",
+  y = "",
+  caption = "created by Jeremy Allen | @jeremy_data for #TidyTuesday and #DuBoisChallenge"
+ ) +
+ annotate("text", 1830, 95, label = 'FREE - LIBRE', color = "black",
+             alpha = .9, family = "dosis-b", size = 6) +
+ annotate("text", 1830, 60, label = 'SLAVES', color = "#e0d9d1",
+             alpha = .9, family = "dosis-b", size = 10) +
+ annotate("text", 1830, 55, label = 'ESCLAVES', color = "#e0d9d1",
+             alpha = .9, family = "dosis-b", size = 10) +
+ scale_x_continuous(
+  breaks = unique(dat$Year),
+  labels = unique(dat$Year),
+  position = "top"
+  ) +
+ theme(
+  text = element_text(family = "dosis-b"),
+  legend.position = "none",
+  plot.title = element_text(hjust = .5, size = 17, margin = margin(-105, 1, 1, 1, "pt")),
+  plot.subtitle = element_text(hjust = .5, size = 12, margin = margin(1, 9, 1, 1, "pt")),
+  #axis.line.x.top = element_line(size = 4, color = "red"),
+  axis.text.x.top = element_text(margin = margin(0,0,-16,0, unit = "pt"),
+                                 size = 18, color = "black"),
+  axis.text.y = element_blank(),
+  axis.ticks = element_blank(),
+  axis.ticks.length = unit(0, "pt"),
+  panel.grid.minor = element_blank(),
+  panel.grid.major = element_blank(),
+  plot.background = element_rect(fill = "#ead9c8"),
+  panel.background = element_rect(fill = "#ead9c8"),
+  #panel.background = element_rect(fill = "red"),
+  plot.margin = margin(3.98, .5, 0, .5, "cm"),
+  panel.spacing = unit(0, "pt")
+ )
+
+ ggsave("webd.png", plot = p, width = 9, height = 12, dpi = 150)
+ 
+ showtext_auto(FALSE)
+ ```
+
